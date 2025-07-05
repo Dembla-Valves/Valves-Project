@@ -1,9 +1,16 @@
+# This Terraform configuration provisions the infrastructure for the TodoApp project in Azure.
+# It uses modules for resource group, virtual network, subnets, public IP, virtual machines, key vault, and secrets.
+# Secrets for VM username and password are stored in Azure Key Vault for better security.
+# Uncomment the backend VM and SQL modules to provision backend and database resources as needed.
+
+# Resource Group for the project
 module "resource_group" {
   source                  = "../modules/azurerm_resource_group"
   resource_group_name     = "rg-todoapp"
   resource_group_location = "centralindia"
 }
 
+# Virtual Network for the project
 module "virtual_network" {
   depends_on = [module.resource_group]
   source     = "../modules/azurerm_virtual_network"
@@ -14,6 +21,7 @@ module "virtual_network" {
   address_space            = ["10.0.0.0/16"]
 }
 
+# Subnet for frontend
 module "frontend_subnet" {
   depends_on = [module.virtual_network]
   source     = "../modules/azurerm_subnet"
@@ -24,6 +32,7 @@ module "frontend_subnet" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
+# Subnet for backend
 module "backend_subnet" {
   depends_on = [module.virtual_network]
   source     = "../modules/azurerm_subnet"
@@ -34,6 +43,7 @@ module "backend_subnet" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
+# Public IP for frontend VM
 module "public_ip_frontend" {
   depends_on          = [module.resource_group]
   source              = "../modules/azurerm_public_ip"
@@ -43,6 +53,7 @@ module "public_ip_frontend" {
   allocation_method   = "Static"
 }
 
+# Frontend Virtual Machine
 module "frontend_vm" {
   depends_on = [module.frontend_subnet, module.key_vault, module.vm_username, module.vm_password, module.public_ip_frontend]
   source     = "../modules/azurerm_virtual_machine"
@@ -65,6 +76,7 @@ module "frontend_vm" {
   password_secret_name = "vm-password"
 }
 
+# Uncomment below modules to provision backend VM and SQL resources
 # module "public_ip_backend" {
 #   source              = "../modules/azurerm_public_ip"
 #   public_ip_name      = "pip-todoapp-backend"
@@ -76,21 +88,21 @@ module "frontend_vm" {
 # module "backend_vm" {
 #   depends_on = [module.backend_subnet]
 #   source     = "../modules/azurerm_virtual_machine"
-
+#
 #   resource_group_name  = "rg-todoapp"
-#   location             = "centralindia"
-#   vm_name              = "vm-backend"
-#   vm_size              = "Standard_B1s"
-#   admin_username       = "devopsadmin"
-#   admin_password       = "P@ssw0rd1234!"
-#   image_publisher      = "Canonical"
-#   image_offer          = "0001-com-ubuntu-server-focal"
-#   image_sku            = "20_04-lts"
-#   image_version        = "latest"
-#   nic_name             = "nic-vm-backend"
+#   location            = "centralindia"
+#   vm_name             = "vm-backend"
+#   vm_size             = "Standard_B1s"
+#   admin_username      = "devopsadmin"
+#   admin_password      = "P@ssw0rd1234!"
+#   image_publisher     = "Canonical"
+#   image_offer         = "0001-com-ubuntu-server-focal"
+#   image_sku           = "20_04-lts"
+#   image_version       = "latest"
+#   nic_name            = "nic-vm-backend"
 #   virtual_network_name = "vnet-todoapp"
-#   subnet_name          = "backend-subnet"
-#   pip_name             = "pip-todoapp-backend"
+#   subnet_name         = "backend-subnet"
+#   pip_name            = "pip-todoapp-backend"
 # }
 
 # module "sql_server" {
@@ -111,6 +123,7 @@ module "frontend_vm" {
 #   sql_database_name   = "tododb"
 # }
 
+# Azure Key Vault for storing secrets
 module "key_vault" {
   source              = "../modules/azurerm_key_vault"
   key_vault_name      = "sonamkitijori"
@@ -118,6 +131,7 @@ module "key_vault" {
   resource_group_name = "rg-todoapp"
 }
 
+# Secret for VM password
 module "vm_password" {
   source              = "../modules/azurerm_key_vault_secret"
   depends_on          = [module.key_vault]
@@ -127,6 +141,7 @@ module "vm_password" {
   secret_value        = "P@ssw01rd@123"
 }
 
+# Secret for VM username
 module "vm_username" {
   source              = "../modules/azurerm_key_vault_secret"
   depends_on          = [module.key_vault]
