@@ -1,7 +1,4 @@
 # This Terraform configuration provisions the infrastructure for the TodoApp project in Azure.
-# It uses modules for resource group, virtual network, subnets, public IP, virtual machines, key vault, and secrets.
-# Secrets for VM username and password are stored in Azure Key Vault for better security.
-# Uncomment the backend VM and SQL modules to provision backend and database resources as needed.
 
 # Resource Group for the project
 module "resource_group" {
